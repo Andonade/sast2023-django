@@ -77,7 +77,7 @@ def boards(req: HttpRequest):
         
         # First check jwt_token. If not exists, return code 2, "Invalid or expired JWT", http status code 401
         
-        # Then invoke `check_for_board_data` to check the body data and get the board_state, board_name and user_name. Check the user_name with the username in jwt_token_payload. If not match, return code 2, "Permission denied", http status code 403
+        # Then invoke `check_for_board_data` to check the body data and get the board_state, board_name and user_name. Check the user_name with the username in jwt_token_payload. If not match, return code 3, "Permission denied", http status code 403
         
         # Find the corresponding user instance by user_name. We can assure that the user exists.
         

@@ -193,7 +193,7 @@ class BoardTests(TestCase):
         res = self.post_board(board_state, board_name, user_name, headers)
         
         self.assertEqual(res.status_code, 403)
-        self.assertEqual(res.json()['code'], 2)
+        self.assertEqual(res.json()['code'], 3)
     
     # `board` key missing
     def test_add_board_without_board(self):
@@ -359,7 +359,7 @@ class BoardTests(TestCase):
         res = self.delete_board_index(board.id, headers)
         
         self.assertNotEqual(res.json()['code'], 0)
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
 
     # + unsupported method
