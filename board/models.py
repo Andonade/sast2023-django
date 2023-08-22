@@ -45,7 +45,7 @@ class Board(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     board_state = models.CharField(max_length=MAX_CHAR_LENGTH)
     board_name = models.CharField(max_length=MAX_CHAR_LENGTH)
-    create_time = models.FloatField(default=utils_time.get_timestamp)
+    created_time = models.FloatField(default=utils_time.get_timestamp)
 
     class META:
         indexes = [models.Index(fields=["board_name"])]
