@@ -43,7 +43,7 @@ class Board(models.Model):
     # Create unique_together on user and board_name
     id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    board_state = models.CharField(max_length=MAX_CHAR_LENGTH)
+    board_state = models.CharField(max_length=2500)
     board_name = models.CharField(max_length=MAX_CHAR_LENGTH)
     created_time = models.FloatField(default=utils_time.get_timestamp)
 
