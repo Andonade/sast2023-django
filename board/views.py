@@ -97,22 +97,16 @@ def boards(req: HttpRequest):
         if not data:
             return request_failed(2, "Invalid or expired JWT", status_code=401)
         else:
-            try:
-                board, boardName, userName = check_for_board_data(body)
-            except AssertionError as err:
-                return request_failed(code=-2, info=err.args[0], status_code=400)
-            except KeyError as err:
-                return request_failed(code=-2, info=err.args[0], status_code=400)
+            board, boardName, userName = check_for_board_data(body)
             if userName != data["username"]:
                 return request_failed(3, "Permission denied", status_code=403)
-        boards_firstFilter = Board.objects.filter(user__name=userName)
-        boards_secondFilter = boards_firstFilter.filter(board_name=boardName)
-        if not boards_secondFilter.first():
-            new_board = Board(board_name=boardName, board_state=board, user=boards_firstFilter.first().user)
+        boards = Board.objects.filter(user__name=userName, board_name=boardName)
+        if not boards.first():
+            new_board = Board(board_name=boardName, board_state=board, user=User.objects.filter(name=userName).first())
             new_board.save()
             return request_success({"isCreate": True})
         else:
-            boards_secondFilter.update(board_state=board)
+            boards.update(board_state=board)
             return request_success({"isCreate": False})
         # TODO End: [Student] Finish the board view function according to the comments above
         
