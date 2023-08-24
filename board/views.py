@@ -28,27 +28,36 @@ def login(req: HttpRequest):
     # If the user does not exist, create a new user and save; while if the user exists, check the password
     # If new user or checking success, return code 0, "Succeed", with {"token": generate_jwt_token(user_name)}
     # Else return request_failed with code 2, "Wrong password", http status code 401
-    
-    return request_failed(1, "Not implemented", 501)
+    user = User.objects.filter(name=username).first()
+    if not user:
+        user = User(name=username, password=password)
+        user.save()
+        return request_success({"token": generate_jwt_token(username)})
+    else:
+        if user.password == password:
+            return request_success({"token": generate_jwt_token(username)})
+        else:
+            return request_failed(2, "Wrong password", 401)
     # TODO End: [Student] Finish the login function according to the comments above
 
 
 def check_for_board_data(body):
     board = require(body, "board", "string", err_msg="Missing or error type of [board]")
     # TODO Start: [Student] add checks for type of boardName and userName
-    board_name = ""
-    user_name = ""
+    board_name = require(body, "boardName", "string", err_msg="Missing or error type of [boardName]")
+    user_name = require(body, "userName", "string", err_msg="Missing or error type of [userName]")
     # TODO End: [Student] add checks for type of boardName and userName
     
     assert 0 < len(board_name) <= 50, "Bad length of [boardName]"
     
     # TODO Start: [Student] add checks for length of userName and board
-    
+    assert 0 < len(user_name) <= 50, "Bad length of [userName]"
+    assert len(board) == 2500, "Bad length of [board]"
     # TODO End: [Student] add checks for length of userName and board
-    
-    
+
+
     # TODO Start: [Student] add more checks (you should read API docs carefully)
-    
+    assert all(char == '0' or char == '1' for char in board), "Invalid char in [board]"
     # TODO End: [Student] add more checks (you should read API docs carefully)
     
     return board, board_name, user_name
@@ -84,9 +93,27 @@ def boards(req: HttpRequest):
         # We lookup if the board with the same name and the same user exists.
         ## If not exists, new an instance of Board type, then save it to the database.
         ## If exists, change corresponding value of current `board`, then save it to the database.
-        
-        return request_failed(1, "Not implemented", 501)
-        
+        data = check_jwt_token(jwt_token)
+        if not data:
+            return request_failed(2, "Invalid or expired JWT", status_code=401)
+        else:
+            try:
+                board, boardName, userName = check_for_board_data(body)
+            except AssertionError as err:
+                return request_failed(code=-2, info=err.args[0], status_code=400)
+            except KeyError as err:
+                return request_failed(code=-2, info=err.args[0], status_code=400)
+            if userName != data["username"]:
+                return request_failed(3, "Permission denied", status_code=403)
+        boards_firstFilter = Board.objects.filter(user__name=userName)
+        boards_secondFilter = boards_firstFilter.filter(board_name=boardName)
+        if not boards_secondFilter.first():
+            new_board = Board(board_name=boardName, board_state=board, user=boards_firstFilter.first().user)
+            new_board.save()
+            return request_success({"isCreate": True})
+        else:
+            boards_secondFilter.update(board_state=board)
+            return request_success({"isCreate": False})
         # TODO End: [Student] Finish the board view function according to the comments above
         
     else:
@@ -113,7 +140,19 @@ def boards_index(req: HttpRequest, index: any):
     
     elif req.method == "DELETE":
         # TODO Start: [Student] Finish the board_index view function
-        return request_failed(1, "Not implemented", 501)
+        jwt_token = req.headers.get("Authorization")
+        data = check_jwt_token(jwt_token)
+        if not data:
+            return request_failed(2, "Invalid or expired JWT", status_code=401)
+        else:
+            board = Board.objects.filter(id=idx)
+            if not board.first():
+                return request_failed(1, "Board not found", status_code=404)
+            elif board.first().user.name != data["username"]:
+                return request_failed(3, "Cannot delete board of other users", status_code=403)
+            else:
+                board.delete()
+                return request_success()
         # TODO End: [Student] Finish the board_index view function
     
     else:
@@ -121,5 +160,26 @@ def boards_index(req: HttpRequest, index: any):
 
 
 # TODO Start: [Student] Finish view function for user_board
-
+@CheckRequire
+def user_board(req: HttpRequest, username: str):
+    try:
+        if req.method != "GET":
+            return BAD_METHOD
+        else:
+            if 0 < len(username) <= 50:
+                user = User.objects.filter(name=username).first()
+                if not user:
+                    return request_failed(1, "User not found", status_code=404)
+                else:
+                    boards = Board.objects.filter(user__name=username).order_by("-created_time")
+                    return request_success({
+                        "userName": username,
+                        "boards": [
+                            return_field(board.serialize(), ["id", "boardName", "createdAt", "userName"])
+                            for board in boards],
+                    })
+            else:
+                return request_failed(code=-1, info="Bad param [userName]", status_code=400)
+    except Exception as e:
+        return request_failed(code=-4, info=str(e), status_code=500)
 # TODO End: [Student] Finish view function for user_board
