@@ -1,8 +1,8 @@
 ## Django 小作业
 
-框架 By c7w([github](https://github.com/c7w))
+框架 By [c7w](https://github.com/c7w)
 
-代码填空 By Andonade([github](https://github.com/Andonade))
+代码填空 By [Andonade](https://github.com/Andonade)
 
 2023 计算机系学生科协暑期培训
 
